@@ -33,16 +33,22 @@
             <td>{{ item._source.CATEGORY }}</td>
             <td>{{ item._source.TITLE }}</td>
             <td>
-              <v-btn @click="onClickBtn"
-                ><v-icon>mdi-dots-horizontal</v-icon></v-btn
-              >
+              <v-btn @click="onClickBtn(item._id)"
+                ><v-icon>mdi-dots-horizontal</v-icon>
+              </v-btn>
             </td>
           </tr>
         </template>
       </v-simple-table>
       <v-dialog v-model="dialog" activator>
         <v-card>
-          <v-card-title>test</v-card-title>
+          <v-card-title>{{ detail_contents.TITLE }}</v-card-title>
+          <v-card-subtitle
+            ><a v-bind:href="detail_contents.URL" target="blank">{{
+              detail_contents.URL
+            }}</a></v-card-subtitle
+          >
+          <v-card-text>{{ detail_contents.TEXT }}</v-card-text>
           <v-card-actions>
             <v-btn block @click="dialog = false">close</v-btn>
           </v-card-actions>
@@ -62,7 +68,9 @@ export default {
   data: function() {
     return {
       dialog: false,
-      results: "test"
+      results: "test",
+      detail_id: "",
+      detail_contents: ""
     };
   },
   mounted() {
@@ -82,8 +90,22 @@ export default {
     fdate(text) {
       return dayjs(text).format("YYYY/MM/DD HH:mm");
     },
-    onClickBtn() {
+    onClickBtn(id) {
       this.dialog = true;
+      this.detail_id = id;
+      axios({
+        method: "post",
+        url: "http://127.0.0.1:9200/livedoor_news/_search",
+        headers: { "Content-Type": "application/json" },
+        data: JSON.stringify({
+          size: "1",
+          query: {
+            match: { _id: this.detail_id }
+          }
+        })
+      }).then(response => {
+        this.detail_contents = response.data.hits.hits[0]._source;
+      });
     }
   }
 };
